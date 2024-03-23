@@ -1,0 +1,25 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    html, body, #app {
+        @apply h-full;
+    }
+    html {
+        font-family: "Rubik", sans-serif;
+    }
+}
+@layer utilities {
+    .draggable-transform {
+        --drag-tw-translate-x: calc( var(--tw-translate-x, 0) + var(--drag-offset-x, 0) );
+        --drag-tw-translate-y: calc( var(--tw-translate-y, 0) + var(--drag-offset-y, 0) );
+        transform: translateX(var(--drag-tw-translate-x, 0)) 
+            translateY(var(--drag-tw-translate-y, 0)) 
+            rotate(var(--tw-rotate)) 
+            skewX(var(--tw-skew-x)) 
+            skewY(var(--tw-skew-y)) 
+            scaleX(var(--tw-scale-x)) 
+            scaleY(var(--tw-scale-y));
+    }
+}
