@@ -6,7 +6,7 @@ import vueJsx from '@vitejs/plugin-vue-jsx'
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  base: process.env.GITHUB_ACTIONS_BASE || undefined,
+  base: '/web-dragging/',
   plugins: [
     vue(),
     vueJsx(),
