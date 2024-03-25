@@ -1,38 +1,49 @@
 import { ref } from 'vue';
+import { getCursorPosition, calculateOffset } from './CursorLogic';
 
 let z = 1;
 const draggedFrom = [0, 0];
-const offsetFrom = [0, 0]
+const offsetFrom = [0, 0];
+export const pauseSelection = ref(false);
+let moveCallback = null;
+let dropCallback = null;
 export const target = ref(null);
 
-export function pick(e, newTarget, ) {
+export function bringToTop(el) {
+    el.style.zIndex = z++;
+}
+
+export function pick(e, newTarget, callbacks) {
     target.value = newTarget;
-    draggedFrom[0] = e.clientX;
-    draggedFrom[1] = e.clientY;
+    moveCallback = callbacks?.move;
+    dropCallback = callbacks?.drop;
+    const cursorPosition = getCursorPosition(e);
+    draggedFrom[0] = cursorPosition[0];
+    draggedFrom[1] = cursorPosition[1];
     offsetFrom[0] = target.value.offsetLeft;
     offsetFrom[1] = target.value.offsetTop;
-    console.log(draggedFrom[0], draggedFrom[1])
-    console.log(offsetFrom[0], offsetFrom[1])
-    target.value.style.zIndex = z++;
+    bringToTop(target.value);
+    pauseSelection.value = true;
 }
+
 export function drop(e) {
+    if (dropCallback instanceof Function) { dropCallback(e); }
     target.value = null;
+    moveCallback = null;
+    dropCallback = null;
+    pauseSelection.value = false;
 }
+
 function drag(e) {
     if (!target.value) return;
-    const curOffset = [
-        e.clientX - draggedFrom[0],
-        e.clientY - draggedFrom[1],
-    ];
+    const curOffset = calculateOffset(e, draggedFrom);
     const x = curOffset[0] + offsetFrom[0];
     const y = curOffset[1] + offsetFrom[1];
 
-    target.value.style.left = `${x}px`;
-    target.value.style.top = `${y}px`;
-
-    console.log("dragging", target.value)
-    
+    moveCallback(x, y);
 }
 
 document.addEventListener('mousemove', (e) => drag(e));
+document.addEventListener('touchmove', (e) => drag(e));
 document.addEventListener('mouseup', (e) => drop(e));
+document.addEventListener('touchend', (e) => drop(e));

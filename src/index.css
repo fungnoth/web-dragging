@@ -4,10 +4,11 @@
 
 @layer base {
     html, body, #app {
-        @apply h-full;
+        @apply h-screen w-screen overflow-hidden;
+    
     }
     html {
-        font-family: "Rubik", sans-serif;
+        font-family: "Rubik", sans-serif;;
     }
 }
 @layer utilities {
