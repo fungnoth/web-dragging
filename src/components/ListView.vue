@@ -90,20 +90,15 @@
     function reorderItems(itemData, newOrder) {
         sortedCombinedItems.value.forEach((combinedItem) => {
             if (combinedItem.metadata.order.value < newOrder) return;
-            if (combinedItem.metadata === itemData) return
+            if (combinedItem.metadata === itemData) return console.log("same")
 
 
             console.log(combinedItem.element, combinedItem)
-            if (combinedItem.metadata.order.value === newOrder) {
-                combinedItem.metadata.order.value -= 1;
-            } else {
-                combinedItem.metadata.order.value += 1;
+            if (combinedItem.metadata.order.value > newOrder) {
+                combinedItem.metadata.order.value += 2;
             }
         })
-        itemData.order.value = newOrder;
-        sortedCombinedItems.value.forEach((combinedItem, i) => {
-            combinedItem.metadata.order.value = i+1;
-        });
+        itemData.order.value = newOrder+1;
     }
 
     function findClosestItem(position, item) {
@@ -202,6 +197,9 @@
                         isDragging.value = false;
                         combinedItems.value.forEach((combinedItem) => {
                             combinedItem.element.style.transition = null;
+                        });
+                        sortedCombinedItems.value.forEach((combinedItem, i) => {
+                            combinedItem.metadata.order.value = i+1;
                         });
 
                     }, 300);
