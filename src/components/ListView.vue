@@ -1,24 +1,38 @@
 <template>
-    <div class="p-2" :class="modeClasses" >
-      <LinkItem v-for="(item, i) in items"
-        ref="itemRefs" :file-name="item.fileName.value" :color="item.color.value" 
-        :data-left="`${item.position?.value?.[0]}px`"
-        :style="{ 
-            left: `${item.position?.value?.[0]}px`, top: `${item.position?.value?.[1]}px`,
-            position: isDragging ? 'absolute' : null,
-            order: (item.order?.value) || i ,
-        }"
-        @dragstart.prevent  
-        @mousedown.prevent="(e)=>dragStart(e, i)" 
-        @touchstart.prevent="(e)=>dragStart(e, i)"
-    ></LinkItem>
-      
+    <div class="flex-wrap" :class="modeClasses" >
+        <LinkItem v-for="(item, i) in items"
+            ref="itemRefs" :file-name="item.fileName.value" :color="item.color.value" 
+            class="relative z-0"
+            :data-left="`${item.position?.value?.[0]}px`"
+            :style="{ 
+                left: isDragging ? `${item.position?.value?.[0]}px` : null, 
+                top:  isDragging ? `${item.position?.value?.[1]}px` : null,
+                position: isDragging ? 'absolute' : null,
+                order: (item.order?.value) || i+1 ,
+            }"
+            @dragstart.prevent  
+            @mousedown.prevent="(e)=>dragStart(e, i)" 
+            @touchstart.prevent="(e)=>dragStart(e, i)"
+        >
+            <div class="absolute right-0" v-if="item.order">
+            
+                {{item.order.value}}
+            </div>
+        </LinkItem>
+        <div :style="{
+                display: isDragging ? 'block' : 'none',
+                left: isDragging ? `${cusorPosition?.[0]}px` : null, 
+                top:  isDragging ? `${cusorPosition?.[1]}px` : null,
+                zIndex: 9999,
+            }" class="absolute cursor-pos rounded-full w-5 h-5  -translate-x-1/2 -translate-y-1/2 backdrop-invert">
+        </div>
     </div>
+
 
 </template>
 
 <script setup>
-    import { ref } from 'vue';
+    import { computed, nextTick, ref } from 'vue';
     import LinkItem from '@/components/LinkItem.vue'
     import { pick, target as draggingTarget, pauseSelection } from '@/DragLogic.js';
     import { getCursorPosition, calculateOffset } from '@/CursorLogic';
@@ -42,8 +56,19 @@
         }
     });
     const itemRefs = ref([]);
-    
     const modeClasses = ref({});
+    const cusorPosition = ref([0, 0]);
+
+    const combinedItems = computed(() => {
+        return itemRefs.value.map((itemRef, index) => ({
+            element: itemRef.el,
+            metadata: items[index],
+            realIndex: index,
+        }));
+    });
+    const sortedCombinedItems = computed(() => {
+        return [... combinedItems.value].sort((a, b) => a.metadata.order.value - b.metadata.order.value);
+    });
     
     function beforeDragging() {
         itemRefs.value.forEach((itemRef, i) => {
@@ -61,19 +86,9 @@
         item.position.value[1] = y;
     }
 
-    function getSortedCombinedItems() {
-        const combinedItems = itemRefs.value.map((itemRef, index) => ({
-            element: itemRef.el,
-            metadata: items[index],
-            realIndex: index,
-        }));
-        combinedItems.sort((a, b) => a.metadata.order.value - b.metadata.order.value);
-        return combinedItems;
-    }
 
     function reorderItems(itemData, newOrder) {
-        const combinedItems = getSortedCombinedItems();
-        combinedItems.forEach((combinedItem) => {
+        sortedCombinedItems.value.forEach((combinedItem) => {
             if (combinedItem.metadata.order.value < newOrder) return;
             if (combinedItem.metadata === itemData) return
 
@@ -82,42 +97,39 @@
             if (combinedItem.metadata.order.value === newOrder) {
                 combinedItem.metadata.order.value -= 1;
             } else {
-                combinedItem.metadata.order.value += 1;
+                // combinedItem.metadata.order.value += 1;
             }
         })
         itemData.order.value = newOrder;
+        sortedCombinedItems.value.forEach((combinedItem, i) => {
+            combinedItem.metadata.order.value = i+1;
+        });
+    }
+
+    function findClosestItem(position, item) {
+        const [x, y] = position;
+        let closestItem = null;
+        let closestDistance = Infinity;
+        for (const combinedItem of sortedCombinedItems.value) {
+            if (combinedItem.metadata === item) continue;
+            const rect = combinedItem.element.getBoundingClientRect();
+            const itemX = rect.left + rect.width / 2;
+            const itemY = rect.top + rect.height / 2;
+            const distance = Math.sqrt((x - itemX) ** 2 + (y - itemY) ** 2);
+            if (distance < closestDistance) {
+                closestItem = combinedItem;
+                closestDistance = distance;
+            }
+        }
+        return closestItem;
     }
 
     function findDropPosition(currentCursorPosition, item) {
         const [cursorX, cursorY] = currentCursorPosition;
 
         // Find the closest item element to the cursor position
-        let closestItem = null;
-        let closestDistance = Infinity;
+        let closestItem = findClosestItem(currentCursorPosition, item);
         
-        const sortedCombinedItems = getSortedCombinedItems();
-        
-
-        console.log("findDropPosition for loop")
-        for (const combinedItem of sortedCombinedItems) {
-            console.log(combinedItem, item)
-            if (combinedItem.metadata === item) {
-                console.log(item, "same")
-                continue;
-            }
-            const rect = combinedItem.element.getBoundingClientRect();
-            const itemX = rect.left + rect.width / 2;
-            const itemY = rect.top + rect.height / 2;
-
-            // Calculate the distance between the cursor and the item center
-            const distance = Math.sqrt((cursorX - itemX) ** 2 + (cursorY - itemY) ** 2);
-
-            // Update the closest item if the distance is smaller
-            if (distance < closestDistance) {
-                closestItem = combinedItem;
-                closestDistance = distance;
-            }
-        }
 
         console.log("findDropPosition for loop end", {closestItem})
         // If no items found, return null
@@ -128,14 +140,14 @@
         const itemX = closestRect.left + closestRect.width / 2;
         const itemY = closestRect.top + closestRect.height / 2;
 
-        console.log("closest item", closestItem, itemX)
-        console.log("Current cursor x", cursorX)
 
         let result;
         if (cursorX < itemX) {
             result = closestItem.metadata.order.value - 1;
+            closestItem.element.style.borderLeftWidth = '4px';
         } else {
             result = closestItem.metadata.order.value ;
+            closestItem.element.style.borderRightWidth = '4px';
         }
         console.log(result, itemRefs)
         return result;
@@ -144,10 +156,22 @@
     function dragStart(e, i) {
         const item = items[i];
         const itemRef = itemRefs.value[i];
+        let lastPosition = getCursorPosition(e);
         const callbacks = {
-            "move": (x, y) => move(item, x, y),
+            "move": (x, y) => {
+                lastPosition = [x, y];
+                
+                for (const combinedItem of sortedCombinedItems.value) {
+                    combinedItem.element.style.borderLeftWidth = 0;
+                    combinedItem.element.style.borderRightWidth = 0;
+                }
+                const order = findDropPosition(lastPosition, item)
+                cusorPosition.value[0] = x;
+                cusorPosition.value[1] = y;
+                return move(item, x, y);
+            },
             "drop": (e) => {
-                const order = findDropPosition(getCursorPosition(e), item)
+                const order = findDropPosition(lastPosition, item)
                 console.log({item})
                 console.log({
                     old: item.order.value,
@@ -156,13 +180,40 @@
                 if (order !== undefined) {
                     reorderItems(item, order)
                 }
-                isDragging.value = false;
+                
+                nextTick(function() {
+                    combinedItems.value.forEach((combinedItem) => {
+                        combinedItem.element.style.position = "static";
+                    });
+                    const newPositons = combinedItems.value.map((combinedItem) => {
+                        const rect = combinedItem.element.getBoundingClientRect();
+                        return [rect.left, rect.top];
+                    });
+                    combinedItems.value.forEach((combinedItem) => {
+                        combinedItem.element.style.borderLeftWidth = 0;
+                        combinedItem.element.style.borderRightWidth = 0;
+                        combinedItem.element.style.transition = ".3s";
+                    });
+
+                    newPositons.forEach((newPosition, i) => {
+                        items[i].position.value = newPosition;
+                    });
+                    setTimeout(() => {
+                        isDragging.value = false;
+                        combinedItems.value.forEach((combinedItem) => {
+                            combinedItem.element.style.transition = null;
+                        });
+
+                    }, 300);
+                })
+                
+
             },
         };
         beforeDragging();
 
         pick(e, itemRef.el, callbacks)
-        // el.value.focus();
+        itemRef.el.focus();
         // console.log({e, item, itemRef, i})
         console.log(itemRef.el)
     }

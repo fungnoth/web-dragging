@@ -1,6 +1,6 @@
 <template>
     <button class="icon-wrap p-2 items-center flex flex-col gap-1
-        focus:bg-white/30"
+        focus:bg-white/30 focus:outline-white"
         ref="el"
     >
         <svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 96 96" :fill="props.color ?? '#FFF'">
@@ -9,6 +9,7 @@
         </svg>
         <div class="text-center" v-text="props.fileName || ''">
         </div>
+        <slot></slot>
     </button>
 </template>
 

@@ -7,10 +7,12 @@
       <BackgroundImage :image="bgImage"></BackgroundImage>
     </Transition>
     
-    <ListView class="absolute top-0 left-0 z-0 flex"
-      mode="list"
-    >
-    </ListView>
+    <div class="absolute top-0 left-0 w-full h-full">
+      <ListView class="relative z-0 flex flex-wrap"
+        mode="list"
+      >
+    </ListView>   
+    </div>
     <div>
       <template v-for="item in items">
         <component :is="item"></component>
