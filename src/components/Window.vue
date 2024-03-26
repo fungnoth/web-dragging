@@ -29,6 +29,7 @@
 
     }
     function dragStart(e) {
+        el.value.focus();
         pick(e, el.value, {
             move
         })

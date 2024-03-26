@@ -1,6 +1,6 @@
 <template>
-    <button class="icon-wrap p-2 items-center flex flex-col gap-1
-        focus:bg-white/30 focus:outline-white"
+    <button class="icon-wrap p-2 items-center flex flex-col gap-1 select-none
+        focus:bg-white/30 focus:outline-white duration-150 transition-[border,margin]"
         ref="el"
     >
         <template v-if="props.icon">
@@ -12,7 +12,7 @@
                 <path fill="#979593" d="M79.1211,24.707L61.293,6.8789C60.7266,6.312,59.9736,6,59.1719,6H19c-1.6543,0-3,1.3457-3,3v78 c0,1.6543,1.3457,3,3,3h58c1.6543,0,3-1.3457,3-3V26.8281C80,26.0273,79.6875,25.2739,79.1211,24.707z M60,8.4141L77.5857,26H61 c-0.5518,0-1-0.4482-1-1V8.4141z M77,88H19c-0.5518,0-1-0.4482-1-1V9c0-0.5518,0.4482-1,1-1h39v17c0,1.6543,1.3457,3,3,3h17v59 C78,87.5518,77.5518,88,77,88z"/>
             </svg>
         </template>
-        <div class="text-center" v-text="props.fileName || ''">
+        <div class="text-center leading-tight mt-1" v-text="props.fileName || ''">
         </div>
         <slot></slot>
     </button>

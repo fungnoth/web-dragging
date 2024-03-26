@@ -1,11 +1,14 @@
 <template>
-    <Window class="absolute top-1/2 left-1/2  w-[40rem] h-[25rem] p-6 border-2 rounded-3xl  bg-white/70 backdrop-blur-lg backdrop-brightness-110 border-white/50" 
-            el-class="w-full h-full overflow-auto"
+    <Window class="absolute top-1/2 left-1/2  w-[40rem] h-[25rem] p-6 border-2 rounded-3xl  bg-white/70 backdrop-blur-lg backdrop-brightness-110 border-white/50
+            [&:focus_h1]:font-bold
+        " 
+            el-class="w-full h-full overflow-auto "
             ref="windowInstance"
+            tabindex="0"
     >
         <Resizable :move="windowInstance?.move" :target="windowInstance?.el"></Resizable>
-        <h2 class="text-xl">Lorem ipsum dolor sit amet</h2>
-        <h1 class="text-4xl mt-1 mb-2  ">Consectetur</h1>
+        <h2 class="text-xl ">Lorem ipsum dolor sit amet</h2>
+        <h1 class="text-4xl mt-1 mb-2 font-normal transition-[font-weight] duration-150">Consectetur</h1>
         <aside @mousedown.stop="()=>bringToTop(windowInstance.el)" 
             @touchstart.stop="()=>bringToTop(windowInstance.el)" class="">
             <p class="text-lg">

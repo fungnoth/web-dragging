@@ -2,7 +2,7 @@
     <div class="flex-wrap" :class="modeClasses" >
         <LinkItem v-for="(item, i) in items"
             ref="itemRefs" :file-name="item.fileName.value" :color="item.color.value" :icon="item.icon.value"
-            class="relative z-0 w-28 h-36 flex flex-col "
+            class="relative border-white/75 z-0 w-28 h-36 flex flex-col "
             :data-left="`${item.position?.value?.[0]}px`"
             :style="{ 
                 left: isDragging ? `${item.position?.value?.[0]}px` : null, 
@@ -35,7 +35,7 @@
     const metaData = [
         { "fileName": "image", },
         { "fileName": "LOLOLOL", },
-        { "fileName": "PK" },
+        { "fileName": "Files", "icon": baseUrl + "files.png" },
         { "fileName": "Instagram", "icon": baseUrl + "instagram.webp" },
         { "fileName": "Google Chrome", "icon": baseUrl + "chrome.png" },
         { "fileName": "Steam", "icon": baseUrl + "steam.png" },
@@ -141,10 +141,12 @@
         let result;
         if (cursorX < itemX) {
             result = closestItem.metadata.order.value - 1;
-            closestItem.element.style.borderLeftWidth = '4px';
+            closestItem.element.style.borderLeftWidth = '12px';
+            // closestItem.element.style.marginLeft = '16px';
         } else {
             result = closestItem.metadata.order.value ;
-            closestItem.element.style.borderRightWidth = '4px';
+            closestItem.element.style.borderRightWidth = '12px';
+            // closestItem.element.style.marginRight = '16px';
         }
         console.log(result, itemRefs)
         return result;
@@ -173,6 +175,8 @@
         combinedItems.value.forEach((combinedItem) => {
             combinedItem.element.style.borderLeftWidth = 0;
             combinedItem.element.style.borderRightWidth = 0;
+            // combinedItem.element.style.marginLeft = 0;
+            // combinedItem.element.style.marginRight = 0;
             combinedItem.element.style.transition = ".3s";
         });
 
@@ -197,6 +201,8 @@
                 for (const combinedItem of sortedCombinedItems.value) {
                     combinedItem.element.style.borderLeftWidth = 0;
                     combinedItem.element.style.borderRightWidth = 0;
+                    // combinedItem.element.style.marginLeft = 0;
+                    // combinedItem.element.style.marginRight = 0;
                 }
                 const order = findDropPosition(lastPosition, item)
                 cusorPosition.value[0] = x;
