@@ -97,7 +97,7 @@
             if (combinedItem.metadata.order.value === newOrder) {
                 combinedItem.metadata.order.value -= 1;
             } else {
-                // combinedItem.metadata.order.value += 1;
+                combinedItem.metadata.order.value += 1;
             }
         })
         itemData.order.value = newOrder;

@@ -22,7 +22,7 @@
               ref="imageWindow"
       >
         <Resizable :target="imageWindow?.el" :move="imageWindow?.move"></Resizable>
-        <BackgroundImage :image="'/img.jpg'"></BackgroundImage>
+        <BackgroundImage :image="baseUrl + 'img.jpg'"></BackgroundImage>
       </Window>
       <MyStatus></MyStatus>
       
@@ -43,9 +43,8 @@
   import ListView from '@/components/ListView.vue'
   const bgImage = ref(null);
   const imageWindow = ref(null);
-
+  const baseUrl = import.meta.env.BASE_URL;
   const items = ref ([]);
-
   import('@/assets/wallpaper.jpg').then(function(resp) {
     bgImage.value = resp.default;
   })

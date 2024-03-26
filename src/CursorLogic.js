@@ -1,6 +1,6 @@
 export function getCursorPosition(e) {
-    if (e instanceof TouchEvent) return [e.touches[0].clientX, e.touches[0].clientY];
     if (e instanceof MouseEvent) return [e.clientX, e.clientY];
+    if (window.TouchEvent && e instanceof TouchEvent) return [e.touches[0].clientX, e.touches[0].clientY];
     return [e.clientX, e.clientY];
 }
 
