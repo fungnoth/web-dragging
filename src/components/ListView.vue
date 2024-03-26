@@ -19,13 +19,6 @@
                 {{item.order.value}}
             </div>
         </LinkItem>
-        <div :style="{
-                display: isDragging ? 'block' : 'none',
-                left: isDragging ? `${cusorPosition?.[0]}px` : null, 
-                top:  isDragging ? `${cusorPosition?.[1]}px` : null,
-                zIndex: 9999,
-            }" class="absolute cursor-pos rounded-full w-5 h-5  -translate-x-1/2 -translate-y-1/2 backdrop-invert">
-        </div>
     </div>
 
 
@@ -34,7 +27,7 @@
 <script setup>
     import { computed, nextTick, ref } from 'vue';
     import LinkItem from '@/components/LinkItem.vue'
-    import { pick, target as draggingTarget, pauseSelection } from '@/DragLogic.js';
+    import { pick } from '@/DragLogic.js';
     import { getCursorPosition, calculateOffset } from '@/CursorLogic';
     const props = defineProps(["mode"])
     
@@ -97,8 +90,12 @@
             if (combinedItem.metadata.order.value > newOrder) {
                 combinedItem.metadata.order.value += 2;
             }
+
         })
         itemData.order.value = newOrder+1;
+        sortedCombinedItems.value.forEach((combinedItem, i) => {
+            combinedItem.metadata.order.value = i+1;
+        });
     }
 
     function findClosestItem(position, item) {
@@ -148,10 +145,46 @@
         return result;
     }
 
+    let _transitionResetTimeout;
+    function resetTransition() {
+        if (_transitionResetTimeout) {
+            clearTimeout(_transitionResetTimeout);
+        }
+        combinedItems.value.forEach((combinedItem) => {
+            combinedItem.element.style.transition = null;
+        });
+    }
+    async function startPosTransition() {
+        await nextTick();
+        resetTransition()
+        combinedItems.value.forEach((combinedItem) => {
+            combinedItem.element.style.position = "static";
+        });
+
+        const newPositons = combinedItems.value.map((combinedItem) => {
+            const rect = combinedItem.element.getBoundingClientRect();
+            return [rect.left, rect.top];
+        });
+        combinedItems.value.forEach((combinedItem) => {
+            combinedItem.element.style.borderLeftWidth = 0;
+            combinedItem.element.style.borderRightWidth = 0;
+            combinedItem.element.style.transition = ".3s";
+        });
+
+        newPositons.forEach((newPosition, i) => {
+            items[i].position.value = newPosition;
+        });
+        _transitionResetTimeout = setTimeout(() => {
+            resetTransition();  
+            isDragging.value = false;
+        }, 300);
+    }
+
     function dragStart(e, i) {
         const item = items[i];
         const itemRef = itemRefs.value[i];
-        let lastPosition = getCursorPosition(e);
+        let lastPosition = getCursorPosition();
+        resetTransition();
         const callbacks = {
             "move": (x, y) => {
                 lastPosition = [x, y];
@@ -175,36 +208,7 @@
                 if (order !== undefined) {
                     reorderItems(item, order)
                 }
-                
-                nextTick(function() {
-                    combinedItems.value.forEach((combinedItem) => {
-                        combinedItem.element.style.position = "static";
-                    });
-                    const newPositons = combinedItems.value.map((combinedItem) => {
-                        const rect = combinedItem.element.getBoundingClientRect();
-                        return [rect.left, rect.top];
-                    });
-                    combinedItems.value.forEach((combinedItem) => {
-                        combinedItem.element.style.borderLeftWidth = 0;
-                        combinedItem.element.style.borderRightWidth = 0;
-                        combinedItem.element.style.transition = ".3s";
-                    });
-
-                    newPositons.forEach((newPosition, i) => {
-                        items[i].position.value = newPosition;
-                    });
-                    setTimeout(() => {
-                        isDragging.value = false;
-                        combinedItems.value.forEach((combinedItem) => {
-                            combinedItem.element.style.transition = null;
-                        });
-                        sortedCombinedItems.value.forEach((combinedItem, i) => {
-                            combinedItem.metadata.order.value = i+1;
-                        });
-
-                    }, 300);
-                })
-                
+                startPosTransition();
 
             },
         };

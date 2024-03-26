@@ -29,6 +29,18 @@
     </div>
 
     
+    <div class="absolute pointer-events-none rounded-full w-5 h-5 -translate-x-1/2 -translate-y-1/2 backdrop-invert transition-opacity"
+      :class="{
+        'opacity-0': !pointerDown,
+        'opacity-50': pointerDown,
+      }"
+      :style="{
+          left: `${pointerPosition?.[0]}px`, 
+          top:  `${pointerPosition?.[1]}px`,
+          zIndex: 9999,
+      }"
+    >
+    </div>
 
   </main>
   
@@ -41,6 +53,7 @@
   import Window from '@/components/Window.vue'
   import Resizable from '@/components/Resizable.vue'
   import ListView from '@/components/ListView.vue'
+  import { pointerDown, pointerPosition } from './CursorLogic'
   const bgImage = ref(null);
   const imageWindow = ref(null);
   const baseUrl = import.meta.env.BASE_URL;

@@ -7,7 +7,7 @@ const targetSize = [0, 0];
 
 export function initResize(e, direction, target) {
     resizeDirection = direction;
-    const cursorPosition = getCursorPosition(e);
+    const cursorPosition = getCursorPosition();
     dragFrom[0] = cursorPosition[0];
     dragFrom[1] = cursorPosition[1];
 
