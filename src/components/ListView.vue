@@ -1,9 +1,8 @@
 <template>
-    <div class="flex-wrap" :class="modeClasses" >
+    <div ref="container" class="flex-wrap relative" :class="modeClasses" >
         <LinkItem v-for="(item, i) in items"
             ref="itemRefs" :file-name="item.fileName.value" :color="item.color.value" :icon="item.icon.value"
-            class="relative border-white/75 z-0 w-28 h-36 flex flex-col "
-            :data-left="`${item.position?.value?.[0]}px`"
+            :launch="item.launch" :class="itemClass"
             :style="{ 
                 left: isDragging ? `${item.position?.value?.[0]}px` : null, 
                 top:  isDragging ? `${item.position?.value?.[1]}px` : null,
@@ -28,18 +27,26 @@
     import { computed, nextTick, ref } from 'vue';
     import LinkItem from '@/components/LinkItem.vue'
     import { pick } from '@/DragLogic.js';
-    import { getCursorPosition, calculateOffset } from '@/CursorLogic';
+    import { getCursorPosition } from '@/CursorLogic';
     const props = defineProps(["mode"])
+    let itemClass = "relative border-white/75 z-0 ";
+    let container = ref(null);
+    let labelClass;
+    if (props.mode === "list") {
+        itemClass += "w-full h-20 flex flex-row"
+        labelClass = "!text-left"
+    } else {
+        itemClass += "w-28 h-36 gap-1 flex flex-col"
+    }
     const baseUrl = import.meta.env.BASE_URL;
     
     const metaData = [
-        { "fileName": "image", },
-        { "fileName": "LOLOLOL", },
-        { "fileName": "Files", "icon": baseUrl + "files.png" },
+        { "fileName": "Component", "launch": '@/components/MyStatus.vue' },
+        { "fileName": "Files", "icon": baseUrl + "files.png", "launch": '@/components/Files.vue' },
         { "fileName": "Instagram", "icon": baseUrl + "instagram.webp" },
         { "fileName": "Google Chrome", "icon": baseUrl + "chrome.png" },
         { "fileName": "Steam", "icon": baseUrl + "steam.png" },
-        { "fileName": "Photos", "icon": baseUrl + "photos.webp" },
+        { "fileName": "Photos", "icon": baseUrl + "photos.webp", "launch": '@/components/ImageBox.vue' },
         { "fileName": "Whatsapp", "icon": baseUrl + "whatsapp.webp" },
 
     ]
@@ -49,13 +56,13 @@
             "fileName": ref(data.fileName),
             "color": ref(data.color),
             "position": ref([null, null]),
+            "launch": data.launch,
             "icon": ref(data.icon),
             "order": ref(i+1),
         }
     });
     const itemRefs = ref([]);
     const modeClasses = ref({});
-    const cusorPosition = ref([0, 0]);
 
     const combinedItems = computed(() => {
         return itemRefs.value.map((itemRef, index) => ({
@@ -68,12 +75,13 @@
         return [... combinedItems.value].sort((a, b) => a.metadata.order.value - b.metadata.order.value);
     });
     
+
     function beforeDragging() {
+
         itemRefs.value.forEach((itemRef, i) => {
             const item = items[i];
             const rect = itemRef.el.getBoundingClientRect();
-            item.position.value[0] = rect.left;
-            item.position.value[1] = rect.top;    
+            item.position.value = getAdjustedPosition([rect.left, rect.top]);
         });
 
         isDragging.value = true;
@@ -91,7 +99,7 @@
             if (combinedItem.metadata === itemData) return console.log("same")
 
 
-            console.log(combinedItem.element, combinedItem)
+            // console.log(combinedItem.element, combinedItem)
             if (combinedItem.metadata.order.value > newOrder) {
                 combinedItem.metadata.order.value += 2;
             }
@@ -110,19 +118,22 @@
         for (const combinedItem of sortedCombinedItems.value) {
             if (combinedItem.metadata === item) continue;
             const rect = combinedItem.element.getBoundingClientRect();
-            const itemX = rect.left + rect.width / 2;
-            const itemY = rect.top + rect.height / 2;
+            const adjustedPos = getAdjustedPosition([rect.left, rect.top]);
+            const itemX = adjustedPos[0] + rect.width / 2;
+            const itemY = adjustedPos[1] + rect.height / 2;
             const distance = Math.sqrt((x - itemX) ** 2 + (y - itemY) ** 2);
             if (distance < closestDistance) {
                 closestItem = combinedItem;
                 closestDistance = distance;
             }
         }
+        const closestRect = closestItem.element.getBoundingClientRect();
+        console.log("target position", position,"closest item position",  [closestRect.left, closestRect.top])
         return closestItem;
     }
 
     function findDropPosition(currentCursorPosition, item) {
-        const [cursorX, cursorY] = currentCursorPosition;
+        const [adjustedX, adjustedY] = currentCursorPosition;
 
         // Find the closest item element to the cursor position
         let closestItem = findClosestItem(currentCursorPosition, item);
@@ -134,19 +145,33 @@
 
         // Determine the drop position based on the cursor position and the closest item
         const closestRect = closestItem.element.getBoundingClientRect();
-        const itemX = closestRect.left + closestRect.width / 2;
-        const itemY = closestRect.top + closestRect.height / 2;
+        const closestPos = getAdjustedPosition([closestRect.left, closestRect.top]);
+        const itemX = closestPos[0] + closestRect.width / 2;
+        const itemY = closestPos[1] + closestRect.height / 2;
 
-
+        console.log({adjustedX, adjustedY})
         let result;
-        if (cursorX < itemX) {
-            result = closestItem.metadata.order.value - 1;
-            closestItem.element.style.borderLeftWidth = '12px';
-            // closestItem.element.style.marginLeft = '16px';
+        if (props.mode === "list") {
+            if (adjustedY < itemY) {
+                result = closestItem.metadata.order.value - 1;
+                closestItem.element.style.borderTopWidth = '12px';
+                // closestItem.element.style.marginTop = '16px';
+            } else {
+                result = closestItem.metadata.order.value ;
+                closestItem.element.style.borderBottomWidth = '12px';
+                // closestItem.element.style.marginBottom = '16px';
+            }
         } else {
-            result = closestItem.metadata.order.value ;
-            closestItem.element.style.borderRightWidth = '12px';
-            // closestItem.element.style.marginRight = '16px';
+            
+            if (adjustedX < itemX) {
+                result = closestItem.metadata.order.value - 1;
+                closestItem.element.style.borderLeftWidth = '12px';
+                // closestItem.element.style.marginLeft = '16px';
+            } else {
+                result = closestItem.metadata.order.value ;
+                closestItem.element.style.borderRightWidth = '12px';
+                // closestItem.element.style.marginRight = '16px';
+            }
         }
         console.log(result, itemRefs)
         return result;
@@ -170,11 +195,13 @@
 
         const newPositons = combinedItems.value.map((combinedItem) => {
             const rect = combinedItem.element.getBoundingClientRect();
-            return [rect.left, rect.top];
+            return getAdjustedPosition([rect.left, rect.top]);
         });
         combinedItems.value.forEach((combinedItem) => {
             combinedItem.element.style.borderLeftWidth = 0;
             combinedItem.element.style.borderRightWidth = 0;
+            combinedItem.element.style.borderTopWidth = 0;
+            combinedItem.element.style.borderBottomWidth = 0;
             // combinedItem.element.style.marginLeft = 0;
             // combinedItem.element.style.marginRight = 0;
             combinedItem.element.style.transition = ".3s";
@@ -188,11 +215,16 @@
             isDragging.value = false;
         }, 300);
     }
+    function getAdjustedPosition(position) {
+        const containerRect = container.value?.getBoundingClientRect() || { left: 0, top: 0 };
+        return [position[0] - containerRect.left, position[1] - containerRect.top];
+    }
 
     function dragStart(e, i) {
         const item = items[i];
         const itemRef = itemRefs.value[i];
         let lastPosition = getCursorPosition();
+
         resetTransition();
         const callbacks = {
             "move": (x, y) => {
@@ -201,12 +233,12 @@
                 for (const combinedItem of sortedCombinedItems.value) {
                     combinedItem.element.style.borderLeftWidth = 0;
                     combinedItem.element.style.borderRightWidth = 0;
+                    combinedItem.element.style.borderTopWidth = 0;
+                    combinedItem.element.style.borderBottomWidth = 0;
                     // combinedItem.element.style.marginLeft = 0;
                     // combinedItem.element.style.marginRight = 0;
                 }
                 const order = findDropPosition(lastPosition, item)
-                cusorPosition.value[0] = x;
-                cusorPosition.value[1] = y;
                 return move(item, x, y);
             },
             "drop": (e) => {
@@ -223,12 +255,14 @@
 
             },
         };
-        beforeDragging();
 
+
+        
+        beforeDragging();
         pick(e, itemRef.el, callbacks)
         itemRef.el.focus();
         // console.log({e, item, itemRef, i})
-        console.log(itemRef.el)
+        // console.log(itemRef.el)
     }
 
 </script>

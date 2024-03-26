@@ -4,24 +4,22 @@
       <BackgroundImage :image="bgImage"></BackgroundImage>
     </Transition>
     
-    <div class="absolute top-0 left-0 w-full h-full">
-      <ListView class="z-0 flex flex-wrap"
-        mode="list"
-      >
-    </ListView>   
+    <div class="absolute top-0 z-0 left-0 w-full h-full">
+      <ListView class="z-0 flex flex-wrap ">
+      </ListView>   
     </div>
-    <div>
-      <template v-for="item in items">
-        <component :is="item"></component>
-      </template>
-      <Window class="absolute top-1/4 left-1/4  w-[32rem] h-[32rem] border-2  border-white/50 bg-white/70 overflow-hidden rounded-3xl " 
-              el-class="w-full h-full  backdrop-blur-lg backdrop-brightness-110 "
-              ref="imageWindow"
+    <div class="">
+      <TransitionGroup  appear 
+          enter-from-class="opacity-0 scale-75" 
+          enter-active-class="duration-150 ease-out origin-top-left"
+          leave-to-class="opacity-0 scale-75"
+          leave-active-class="duration-150 ease-in origin-top"
       >
-        <Resizable :target="imageWindow?.el" :move="imageWindow?.move"></Resizable>
-        <BackgroundImage :image="baseUrl + 'img.jpg'"></BackgroundImage>
-      </Window>
-      <MyStatus></MyStatus>
+          <component v-for="(item, pid) in items" :is="item.component" 
+            :key="pid" @close="delete items[pid]"
+            :position="item.position"
+          ></component>
+      </TransitionGroup >
       
     </div>
 
@@ -42,10 +40,8 @@
 <script setup>
   import { computed, ref } from 'vue'
   import BackgroundImage from '@/components/BackgroundImage.vue'
-  import MyStatus from '@/components/MyStatus.vue'
-  import Window from '@/components/Window.vue'
-  import Resizable from '@/components/Resizable.vue'
   import ListView from '@/components/ListView.vue'
+  import {items} from '@/Tasks.js'
   import { pointerDown, pointerPosition as globalPointerPosition } from './CursorLogic'
 
   const _pointerPosition = ref([0,0]);
@@ -56,9 +52,6 @@
     return _pointerPosition.value;
   }) 
   const bgImage = ref(null);
-  const imageWindow = ref(null);
-  const baseUrl = import.meta.env.BASE_URL;
-  const items = ref ([]);
   import('@/assets/wallpaper.jpg').then(function(resp) {
     bgImage.value = resp.default;
   })

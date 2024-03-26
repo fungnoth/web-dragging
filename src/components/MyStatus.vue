@@ -2,9 +2,9 @@
     <Window class="absolute top-1/2 left-1/2  w-[40rem] h-[25rem] p-6 border-2 rounded-3xl  bg-white/70 backdrop-blur-lg backdrop-brightness-110 border-white/50
             [&:focus_h1]:font-bold
         " 
-            el-class="w-full h-full overflow-auto "
+            el-class="w-full h-full overflow-auto"
             ref="windowInstance"
-            tabindex="0"
+            tabindex="0" :position="position"
     >
         <Resizable :move="windowInstance?.move" :target="windowInstance?.el"></Resizable>
         <h2 class="text-xl ">Lorem ipsum dolor sit amet</h2>
@@ -24,5 +24,6 @@
     import { bringToTop } from '@/DragLogic.js';
     import Resizable from '@/components/Resizable.vue'
     import {ref} from 'vue';
+    defineProps(["position"])
     const windowInstance = ref(null);
 </script>
