@@ -14,10 +14,10 @@
             @mousedown.prevent="(e)=>dragStart(e, i)" 
             @touchstart.prevent="(e)=>dragStart(e, i)"
         >
-            <div class="absolute right-0" v-if="item.order">
+            <!-- <div class="absolute right-0" v-if="item.order">
             
                 {{item.order.value}}
-            </div>
+            </div> -->
         </LinkItem>
     </div>
 
