@@ -1,8 +1,8 @@
 <template>
     <div class="flex-wrap" :class="modeClasses" >
         <LinkItem v-for="(item, i) in items"
-            ref="itemRefs" :file-name="item.fileName.value" :color="item.color.value" 
-            class="relative z-0"
+            ref="itemRefs" :file-name="item.fileName.value" :color="item.color.value" :icon="item.icon.value"
+            class="relative z-0 w-28 h-36 flex flex-col "
             :data-left="`${item.position?.value?.[0]}px`"
             :style="{ 
                 left: isDragging ? `${item.position?.value?.[0]}px` : null, 
@@ -30,14 +30,18 @@
     import { pick } from '@/DragLogic.js';
     import { getCursorPosition, calculateOffset } from '@/CursorLogic';
     const props = defineProps(["mode"])
+    const baseUrl = import.meta.env.BASE_URL;
     
     const metaData = [
-        { "fileName": "123", "color": "red"},
-        { "fileName": "image", "color": "blue"},
-        { "fileName": "LOLOLOL", "color": "yellow"},
-        { "fileName": "PK", "color": "purple"},
-        { "fileName": "xzv", "color": "#777"},
-        { "fileName": "[][][]", "color": "#000"},
+        { "fileName": "image", },
+        { "fileName": "LOLOLOL", },
+        { "fileName": "PK" },
+        { "fileName": "Instagram", "icon": baseUrl + "instagram.webp" },
+        { "fileName": "Google Chrome", "icon": baseUrl + "chrome.png" },
+        { "fileName": "Steam", "icon": baseUrl + "steam.png" },
+        { "fileName": "Photos", "icon": baseUrl + "photos.webp" },
+        { "fileName": "Whatsapp", "icon": baseUrl + "whatsapp.webp" },
+
     ]
     const isDragging = ref(false);
     const items = metaData.map((data, i) => {
@@ -45,6 +49,7 @@
             "fileName": ref(data.fileName),
             "color": ref(data.color),
             "position": ref([null, null]),
+            "icon": ref(data.icon),
             "order": ref(i+1),
         }
     });
