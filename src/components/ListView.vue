@@ -11,7 +11,7 @@
             }"
             @dragstart.prevent  
             @mousedown.prevent="(e)=>_dragStart(e, i)" 
-            @touchstart.prevent="(e)=>dragStart(e, i)"
+            @touchstart="(e)=>dragStart(e, i)"
             @dblclick="launch(item)"
         >
             <!-- <div class="absolute right-0" v-if="item.order">
