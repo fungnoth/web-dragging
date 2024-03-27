@@ -10,8 +10,9 @@
                 order: (item.order?.value) || i+1 ,
             }"
             @dragstart.prevent  
-            @mousedown.prevent="(e)=>dragStart(e, i)" 
+            @mousedown.prevent="(e)=>_dragStart(e, i)" 
             @touchstart.prevent="(e)=>dragStart(e, i)"
+            @dblclick="launch(item)"
         >
             <!-- <div class="absolute right-0" v-if="item.order">
             
@@ -24,11 +25,15 @@
 </template>
 
 <script setup>
-    import { computed, nextTick, ref } from 'vue';
+    import { computed, nextTick, ref, watch } from 'vue';
     import LinkItem from '@/components/LinkItem.vue'
     import { pick } from '@/DragLogic.js';
-    import { getCursorPosition } from '@/CursorLogic';
+    import { getCursorPosition, pointerDown } from '@/CursorLogic';
+    import { launch as launchTask } from '@/Tasks.js';
     const props = defineProps(["mode"])
+    let dragCheckingTimeout = null;
+    let lastTap = {pos: [null, null], time: 0};
+    let dragTrack = [];
     let itemClass = "relative border-white/75 z-0 ";
     let container = ref(null);
     let labelClass;
@@ -39,6 +44,9 @@
         itemClass += "w-28 h-36 gap-1 flex flex-col"
     }
     const baseUrl = import.meta.env.BASE_URL;
+    watch(pointerDown, (val) => {
+        if (dragCheckingTimeout) clearTimeout(dragCheckingTimeout);
+    });
     
     const metaData = [
         { "fileName": "Component", "launch": '@/components/MyStatus.vue' },
@@ -132,6 +140,10 @@
         return closestItem;
     }
 
+    function launch(item) {
+        item.launch && launchTask(item.launch);
+    }
+
     function findDropPosition(currentCursorPosition, item) {
         const [adjustedX, adjustedY] = currentCursorPosition;
 
@@ -221,6 +233,47 @@
     }
 
     function dragStart(e, i) {
+        let lastPosition = getCursorPosition();
+        dragTrack = [lastPosition];
+        
+        const dist = (a, b) => Math.sqrt((a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2);
+        const hasLastTap = lastTap.pos[0] !== null && lastTap.pos[1] !== null;
+        const lastTapDistance = hasLastTap ? dist(lastTap.pos, lastPosition) : undefined;
+        const tapInterval = hasLastTap ? Date.now() - lastTap.time : undefined;
+        console.log({lastTapDistance, tapInterval})
+
+        lastTap.pos = lastPosition;
+        lastTap.time = Date.now();
+
+        console.log("NOT REAL dragStart", i)
+
+        const item = items[i];
+        const itemRef = itemRefs.value[i];
+        if (dragCheckingTimeout) clearTimeout(dragCheckingTimeout);
+        dragCheckingTimeout = setTimeout(() => {
+            const anyMovement = dragTrack.filter((pos) => {
+                return Math.abs(pos[0] - lastPosition[0]) > 5 || Math.abs(pos[1] - lastPosition[1]) > 5;
+            }).length > 1;
+            if (anyMovement) return console.log("dragTooShort")
+            _dragStart(e, i)
+
+        }, 500);
+
+
+        if (hasLastTap && lastTapDistance < 50 && tapInterval < 300) {
+
+            setTimeout(() => {
+                if (pointerDown.value) return console.log("DOUBLE TAP CANCELLED");
+                console.log("DOUBLE TAP", item)
+                launch(item);
+
+            }, 300);
+        }
+
+    }
+
+    function _dragStart(e, i) {
+        console.log("REAL dragStart", i)
         const item = items[i];
         const itemRef = itemRefs.value[i];
         let lastPosition = getCursorPosition();
@@ -229,6 +282,7 @@
         const callbacks = {
             "move": (x, y) => {
                 lastPosition = [x, y];
+                dragTrack.push(lastPosition);
                 
                 for (const combinedItem of sortedCombinedItems.value) {
                     combinedItem.element.style.borderLeftWidth = 0;
@@ -242,6 +296,7 @@
                 return move(item, x, y);
             },
             "drop": (e) => {
+                if (dragCheckingTimeout) clearTimeout(dragCheckingTimeout);
                 const order = findDropPosition(lastPosition, item)
                 console.log({item})
                 console.log({

@@ -2,7 +2,6 @@
     <button class="icon-wrap p-2 items-center flex gap-1 select-none
         focus:bg-white/30 focus:outline-white duration-150 transition-[border,margin]"
         ref="el"
-        v-on:dblclick="launch"
     >
         <template v-if="props.icon">
             <img :src="props.icon" alt="icon" class="flex-shrink-0 h-3/5  aspect-square object-contain">
@@ -35,19 +34,10 @@ const props = defineProps({
     }
 })
 import { ref } from 'vue';
-import { launch as launchTask } from '@/Tasks';
 const el = ref(null);
 
 defineExpose({
     el
 })
-
-function launch() {
-    console.log('launching', props.launch)
-    if (props.launch) { 
-        launchTask(props.launch)
-    }
-
-}
 
 </script>
