@@ -30,6 +30,7 @@
     import { pick } from '@/DragLogic.js';
     import { getCursorPosition, pointerDown } from '@/CursorLogic';
     import { launch as launchTask } from '@/Tasks.js';
+    import { touchHandler } from '@/Touch.js';
     const props = defineProps(["mode"])
     let dragCheckingTimeout = null;
     let lastTap = {pos: [null, null], time: 0};
@@ -233,47 +234,30 @@
     }
 
     function dragStart(e, i) {
-        let lastPosition = getCursorPosition();
-        dragTrack = [lastPosition];
-        
-        const dist = (a, b) => Math.sqrt((a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2);
-        const hasLastTap = lastTap.pos[0] !== null && lastTap.pos[1] !== null;
-        const lastTapDistance = hasLastTap ? dist(lastTap.pos, lastPosition) : undefined;
-        const tapInterval = hasLastTap ? Date.now() - lastTap.time : undefined;
-        console.log({lastTapDistance, tapInterval})
+        touchHandler(e, {
+            onDoubleTap: function (e) {
+                console.log("DOUBLE TAP", i)
+            },
+            onTap: function (e) {
+                console.log("ONE TAP", i)
+                launch(items[i]);
+            }
+        })
+        e.preventDefault();
 
-        lastTap.pos = lastPosition;
-        lastTap.time = Date.now();
+        // if (dragCheckingTimeout) clearTimeout(dragCheckingTimeout);
+        // dragCheckingTimeout = setTimeout(() => {
+        //     const anyMovement = dragTrack.filter((pos) => {
+        //         return Math.abs(pos[0] - lastPosition[0]) > 5 || Math.abs(pos[1] - lastPosition[1]) > 5;
+        //     }).length > 1;
+        //     if (anyMovement) return console.log("dragTooShort")
+        //     _dragStart(e, i)
 
-        console.log("NOT REAL dragStart", i)
-
-        const item = items[i];
-        const itemRef = itemRefs.value[i];
-        if (dragCheckingTimeout) clearTimeout(dragCheckingTimeout);
-        dragCheckingTimeout = setTimeout(() => {
-            const anyMovement = dragTrack.filter((pos) => {
-                return Math.abs(pos[0] - lastPosition[0]) > 5 || Math.abs(pos[1] - lastPosition[1]) > 5;
-            }).length > 1;
-            if (anyMovement) return console.log("dragTooShort")
-            _dragStart(e, i)
-
-        }, 500);
-
-
-        if (hasLastTap && lastTapDistance < 50 && tapInterval < 300) {
-
-            setTimeout(() => {
-                if (pointerDown.value) return console.log("DOUBLE TAP CANCELLED");
-                console.log("DOUBLE TAP", item)
-                launch(item);
-
-            }, 300);
-        }
+        // }, 500);
 
     }
 
     function _dragStart(e, i) {
-        console.log("REAL dragStart", i)
         const item = items[i];
         const itemRef = itemRefs.value[i];
         let lastPosition = getCursorPosition();
