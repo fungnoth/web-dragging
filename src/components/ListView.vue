@@ -25,7 +25,7 @@
 </template>
 
 <script setup>
-    import { computed, nextTick, ref, watch } from 'vue';
+    import { computed, nextTick, ref, watch, defineAsyncComponent } from 'vue';
     import LinkItem from '@/components/LinkItem.vue'
     import { pick } from '@/DragLogic.js';
     import { getCursorPosition, pointerDown } from '@/CursorLogic';
@@ -50,12 +50,12 @@
     });
     
     const metaData = [
-        { "fileName": "Component", "launch": '@/components/MyStatus.vue' },
-        { "fileName": "Files", "icon": baseUrl + "files.png", "launch": '@/components/Files.vue' },
+        { "fileName": "Component", "launch": defineAsyncComponent(()=>import('@/components/MyStatus.vue')) },
+        { "fileName": "Files", "icon": baseUrl + "files.png", "launch": defineAsyncComponent(()=>import('@/components/Files.vue')) },
         { "fileName": "Instagram", "icon": baseUrl + "instagram.webp" },
         { "fileName": "Google Chrome", "icon": baseUrl + "chrome.png" },
         { "fileName": "Steam", "icon": baseUrl + "steam.png" },
-        { "fileName": "Photos", "icon": baseUrl + "photos.webp", "launch": '@/components/ImageBox.vue' },
+        { "fileName": "Photos", "icon": baseUrl + "photos.webp", "launch": defineAsyncComponent(()=>import('@/components/ImageBox.vue')) },
         { "fileName": "Whatsapp", "icon": baseUrl + "whatsapp.webp" },
 
     ]
