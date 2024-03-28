@@ -12,7 +12,7 @@
         <div 
             :class="{ [elClass]:true, '[&_*]:select-none': Boolean(pauseSelection) }" data-pos-wrap
         >
-            <button class="close-btn | z-10 text-3xl absolute top-4 right-6 w-8 h-8 rounded-lg" 
+            <button class="close-btn | flex flex-col z-10 text-3xl absolute top-4 right-6 w-8 h-8 rounded-lg" 
                 @click="$emit('close')" 
                 @touchstart="closeBtnTouchStart"
             >
