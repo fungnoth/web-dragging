@@ -2,13 +2,18 @@ import { ref } from "vue";
 
 export const pointerDown = ref(false);
 export const pointerPosition = ref([0, 0]);
-document.addEventListener("pointerdown", () => {
+document.addEventListener("pointerdown", (e) => {
+    pointerPosition.value = getCursorPosition(e);
     pointerDown.value = true;
 });
-document.addEventListener("pointerup", () => {
+document.addEventListener("pointerup", (e) => {
+    pointerPosition.value = getCursorPosition(e);
     pointerDown.value = false;
 });
-document.addEventListener("pointermove", (e) => {
+document.addEventListener("mousemove", (e) => {
+    pointerPosition.value = getCursorPosition(e);
+});
+document.addEventListener("touchmove", (e) => {
     pointerPosition.value = getCursorPosition(e);
 });
 

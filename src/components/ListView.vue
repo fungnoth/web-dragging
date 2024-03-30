@@ -237,13 +237,18 @@
         touchHandler(e, {
             onDoubleTap: function (e) {
                 console.log("DOUBLE TAP", i)
+                launch(items[i]);
             },
             onTap: function (e) {
                 console.log("ONE TAP", i)
                 launch(items[i]);
+            },
+            onLongPress: function () {
+                console.log("LONG PRESS", i)
+                
             }
         })
-        e.preventDefault();
+        // e.preventDefault();
 
         // if (dragCheckingTimeout) clearTimeout(dragCheckingTimeout);
         // dragCheckingTimeout = setTimeout(() => {

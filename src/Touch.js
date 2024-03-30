@@ -1,12 +1,14 @@
-import { shallowRef } from "vue";
-import {getCursorPosition} from "@/CursorLogic.js";
+import { computed, shallowRef, watch } from "vue";
+import {getCursorPosition, pointerDown, pointerPosition} from "@/CursorLogic.js";
 
 const DOUBLE_TAP_DISTANCE = 40;
 const DOUBLE_TAP_INTERVAL = 200;
+const LONG_PRESS_INTERVAL = 500;
 
 export const dragTrack = shallowRef([]);
 let dragCheckingTimeout = null;
 let doubleTapCheckingTimeout = null;
+let longPressCheckingTimeout = null;
 let lastTap = {pos: [null, null], time: 0};
 
 export function tapCleanup(){
@@ -26,6 +28,10 @@ function _isDoubleTap(e){
     return hasLastTap && lastTapDistance < DOUBLE_TAP_DISTANCE && tapInterval < DOUBLE_TAP_INTERVAL;
 }
 
+function _isLongPress(){
+    return Date.now() - lastTap.time > LONG_PRESS_INTERVAL;
+}
+
 
 export function touchHandler(e, callbacks){
     dragTrack.value = [getCursorPosition()];
@@ -36,11 +42,38 @@ export function touchHandler(e, callbacks){
         callbacks.onDoubleTap(e);
         return;
     }
+    
+    if (longPressCheckingTimeout) clearTimeout(longPressCheckingTimeout);
+    longPressCheckingTimeout = setTimeout(() => {
+        if (pointerDown.value &&_isLongPress()){
+            console.log("long press");
+            callbacks.onLongPress && callbacks.onLongPress(e);
+            if (doubleTapCheckingTimeout) clearTimeout(doubleTapCheckingTimeout);
+        }
+    }, LONG_PRESS_INTERVAL);
+
     lastTap = {pos: getCursorPosition(), time: Date.now()};
     doubleTapCheckingTimeout = setTimeout(() => {
+        console.log("still pressing?", pointerDown.value);
+        if (pointerDown.value) return;
+        console.log("still pressing?", pointerDown.value);  
         callbacks.onTap(e);
         
     }, DOUBLE_TAP_INTERVAL);
-
-
 }
+
+watch(pointerPosition, (newVal, oldVal) => {
+    if (newVal === oldVal) return;
+    if (!pointerDown.value) return;
+    dragTrack.value.push(newVal);
+    if (longPressCheckingTimeout) clearTimeout(longPressCheckingTimeout);
+    if (doubleTapCheckingTimeout) clearTimeout(doubleTapCheckingTimeout);
+
+});
+
+watch(pointerDown, (newVal, oldVal) => {
+    if (newVal) return;
+    if (dragCheckingTimeout) clearTimeout(dragCheckingTimeout);
+    if (longPressCheckingTimeout) clearTimeout(longPressCheckingTimeout);
+    dragTrack.value = [];
+});
